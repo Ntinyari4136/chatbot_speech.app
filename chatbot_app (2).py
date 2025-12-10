@@ -43,7 +43,9 @@ def LemTokens(tokens):
     return [lemmer.lemmatize(token) for token in tokens]
 
 def LemNormalize(text):
-    return LemTokens(nltk.word_tokenize(text.lower().translate(remove_punct_dict)))
+    # Lowercase, remove punctuation, split by spaces
+    return [word for word in text.lower().translate(remove_punct_dict).split() if word]
+
 
 # ---------------- Chatbot response function ----------------
 def chatbot_response(user_input):
@@ -98,4 +100,3 @@ elif input_mode == "Audio":
         st.write("You said:", user_text)
         response = chatbot_response(user_text)
         st.text_area("Chatbot Response", value=response, height=100)
-
