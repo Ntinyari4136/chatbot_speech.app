@@ -1,11 +1,14 @@
 import streamlit as st
 import random
 import speech_recognition as sr
+import pyttsx3
 from streamlit_webrtc import webrtc_streamer, AudioProcessorBase, WebRtcMode
 import av
 import numpy as np
+import tempfile
+import soundfile as sf
 
-# ---------------- Chatbot data with multiple responses ----------------
+# ---------------- Chatbot data ----------------
 raw_data = {
     "hello": [
         "Hello! How can I help you today?",
@@ -41,9 +44,6 @@ def chatbot_response(user_input):
 recognizer = sr.Recognizer()
 
 def speech_to_text_from_audio(audio_array, sample_rate):
-    # Convert numpy audio array to audio file
-    import tempfile
-    import soundfile as sf
     with tempfile.NamedTemporaryFile(suffix=".wav") as f:
         sf.write(f.name, audio_array, sample_rate)
         with sr.AudioFile(f.name) as source:
@@ -56,36 +56,54 @@ def speech_to_text_from_audio(audio_array, sample_rate):
             except sr.RequestError:
                 return "Could not request results; check your internet connection."
 
+# ---------------- Text-to-speech ----------------
+engine = pyttsx3.init()
+def speak_text(text):
+    engine.say(text)
+    engine.runAndWait()
+
 # ---------------- Streamlit WebRTC Audio Processor ----------------
 class AudioProcessor(AudioProcessorBase):
     def __init__(self):
         self.user_text = None
 
     def recv(self, frame: av.AudioFrame) -> av.AudioFrame:
-        # Convert to numpy
         audio_array = frame.to_ndarray()
-        # Only process if not empty
         if audio_array.any():
             self.user_text = speech_to_text_from_audio(audio_array.T[0], frame.sample_rate)
         return frame
 
-# ---------------- Streamlit app ----------------
+# ---------------- Streamlit App ----------------
 st.title("Live Speech-Enabled Chatbot")
-st.write("Talk to the bot using your microphone in real-time.")
+st.write("You can chat via text or talk to the bot using your microphone.")
 
-# Start WebRTC for live audio
-webrtc_ctx = webrtc_streamer(
-    key="speech-chatbot",
-    mode=WebRtcMode.SENDONLY,
-    audio_processor_factory=AudioProcessor,
-    media_stream_constraints={"audio": True, "video": False},
-    async_processing=True
-)
+input_mode = st.radio("Choose input type:", ("Text", "Microphone"))
 
-if webrtc_ctx.audio_processor:
-    user_text = webrtc_ctx.audio_processor.user_text
-    if user_text:
-        st.write("You said:", user_text)
-        response = chatbot_response(user_text)
+# -------- Text Input --------
+if input_mode == "Text":
+    user_input = st.text_input("Type your message here:")
+    if user_input:
+        response = chatbot_response(user_input)
         st.text_area("Chatbot Response", value=response, height=100)
+        speak_text(response)  # Bot speaks response
+
+# -------- Microphone Input --------
+elif input_mode == "Microphone":
+    st.write("Start speaking. The bot will respond via audio.")
+    webrtc_ctx = webrtc_streamer(
+        key="speech-chatbot",
+        mode=WebRtcMode.SENDONLY,
+        audio_processor_factory=AudioProcessor,
+        media_stream_constraints={"audio": True, "video": False},
+        async_processing=True
+    )
+
+    if webrtc_ctx.audio_processor:
+        user_text = webrtc_ctx.audio_processor.user_text
+        if user_text:
+            st.write("You said:", user_text)
+            response = chatbot_response(user_text)
+            st.text_area("Chatbot Response", value=response, height=100)
+            speak_text(response)  # Bot speaks response
+
 
