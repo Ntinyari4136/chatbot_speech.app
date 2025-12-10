@@ -6,6 +6,19 @@ import speech_recognition as sr
 from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+import nltk
+import os
+
+nltk_data_path = os.path.join(os.getcwd(), "nltk_data")
+if not os.path.exists(nltk_data_path):
+    os.makedirs(nltk_data_path)
+
+nltk.download('punkt', download_dir=nltk_data_path)
+nltk.download('wordnet', download_dir=nltk_data_path)
+nltk.download('stopwords', download_dir=nltk_data_path)
+
+# Tell NLTK to look for data in this folder
+nltk.data.path.append(nltk_data_path)
 
 # ---------------- NLTK setup ----------------
 nltk.download('punkt')
@@ -21,7 +34,8 @@ Feel free to talk to me.
 I am here to assist you.
 """.lower()
 
-sent_tokens = nltk.sent_tokenize(raw_data)
+sent_tokens = [line.strip() for line in raw_data.split("\n") if line.strip()]
+
 lemmer = WordNetLemmatizer()
 remove_punct_dict = dict((ord(punct), None) for punct in string.punctuation)
 
