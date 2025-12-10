@@ -1,32 +1,8 @@
-
 import streamlit as st
-import nltk
-import string
 import speech_recognition as sr
-from nltk.stem import WordNetLemmatizer
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-import nltk
-import os
 import random
 
-nltk_data_path = os.path.join(os.getcwd(), "nltk_data")
-if not os.path.exists(nltk_data_path):
-    os.makedirs(nltk_data_path)
-
-nltk.download('punkt', download_dir=nltk_data_path)
-nltk.download('wordnet', download_dir=nltk_data_path)
-nltk.download('stopwords', download_dir=nltk_data_path)
-
-# Tell NLTK to look for data in this folder
-nltk.data.path.append(nltk_data_path)
-
-# ---------------- NLTK setup ----------------
-nltk.download('punkt')
-nltk.download('wordnet')
-nltk.download('stopwords')
-
-# ---------------- Chatbot data embedded directly ----------------
+# ---------------- Chatbot data with multiple responses ----------------
 raw_data = {
     "hello": [
         "Hello! How can I help you today?",
@@ -50,19 +26,6 @@ raw_data = {
     ]
 }
 
-sent_tokens = [line.strip() for line in raw_data.split("\n") if line.strip()]
-
-lemmer = WordNetLemmatizer()
-remove_punct_dict = dict((ord(punct), None) for punct in string.punctuation)
-
-def LemTokens(tokens):
-    return [lemmer.lemmatize(token) for token in tokens]
-
-def LemNormalize(text):
-    # Lowercase, remove punctuation, split by spaces
-    return [word for word in text.lower().translate(remove_punct_dict).split() if word]
-
-
 # ---------------- Chatbot response function ----------------
 def chatbot_response(user_input):
     user_input_lower = user_input.lower()
@@ -72,7 +35,6 @@ def chatbot_response(user_input):
             return random.choice(raw_data[key])
     
     return random.choice(raw_data["default"])
-
 
 # ---------------- Speech-to-text function ----------------
 def speech_to_text(audio_file):
@@ -106,3 +68,4 @@ elif input_mode == "Audio":
         st.write("You said:", user_text)
         response = chatbot_response(user_text)
         st.text_area("Chatbot Response", value=response, height=100)
+
