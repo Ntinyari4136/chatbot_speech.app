@@ -1,11 +1,11 @@
 import streamlit as st
 import random
 import speech_recognition as sr
-import pyttsx3
+from gtts import gTTS
+import tempfile
 from streamlit_webrtc import webrtc_streamer, AudioProcessorBase, WebRtcMode
 import av
 import numpy as np
-import tempfile
 import soundfile as sf
 
 # ---------------- Chatbot data ----------------
@@ -44,6 +44,7 @@ def chatbot_response(user_input):
 recognizer = sr.Recognizer()
 
 def speech_to_text_from_audio(audio_array, sample_rate):
+    import tempfile
     with tempfile.NamedTemporaryFile(suffix=".wav") as f:
         sf.write(f.name, audio_array, sample_rate)
         with sr.AudioFile(f.name) as source:
@@ -56,13 +57,14 @@ def speech_to_text_from_audio(audio_array, sample_rate):
             except sr.RequestError:
                 return "Could not request results; check your internet connection."
 
-# ---------------- Text-to-speech ----------------
-engine = pyttsx3.init()
-def speak_text(text):
-    engine.say(text)
-    engine.runAndWait()
+# ---------------- Convert text to speech ----------------
+def speak_text_gtts(text):
+    tts = gTTS(text=text, lang="en")
+    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
+        tts.save(f.name)
+        return f.name  # path to mp3 file
 
-# ---------------- Streamlit WebRTC Audio Processor ----------------
+# ---------------- WebRTC audio processor ----------------
 class AudioProcessor(AudioProcessorBase):
     def __init__(self):
         self.user_text = None
@@ -73,7 +75,7 @@ class AudioProcessor(AudioProcessorBase):
             self.user_text = speech_to_text_from_audio(audio_array.T[0], frame.sample_rate)
         return frame
 
-# ---------------- Streamlit App ----------------
+# ---------------- Streamlit app ----------------
 st.title("Live Speech-Enabled Chatbot")
 st.write("You can chat via text or talk to the bot using your microphone.")
 
@@ -85,7 +87,8 @@ if input_mode == "Text":
     if user_input:
         response = chatbot_response(user_input)
         st.text_area("Chatbot Response", value=response, height=100)
-        speak_text(response)  # Bot speaks response
+        audio_file = speak_text_gtts(response)
+        st.audio(audio_file, format="audio/mp3")
 
 # -------- Microphone Input --------
 elif input_mode == "Microphone":
@@ -104,6 +107,6 @@ elif input_mode == "Microphone":
             st.write("You said:", user_text)
             response = chatbot_response(user_text)
             st.text_area("Chatbot Response", value=response, height=100)
-            speak_text(response)  # Bot speaks response
-
+            audio_file = speak_text_gtts(response)
+            st.audio(audio_file, format="audio/mp3")
 
