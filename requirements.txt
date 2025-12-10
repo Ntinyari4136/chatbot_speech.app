@@ -1,10 +1,8 @@
 streamlit
-nltk
 speechrecognition
-scikit-learn
-pydub
 streamlit-webrtc
 numpy
-soundfile
-pyttsx3
 av
+soundfile
+gTTS
+
