@@ -1,4 +1,4 @@
-%%writefile chatbot_app.py
+
 import streamlit as st
 import nltk
 import string
