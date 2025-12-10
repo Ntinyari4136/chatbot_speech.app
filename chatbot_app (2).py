@@ -1,8 +1,9 @@
 import streamlit as st
 import speech_recognition as sr
 import random
+import tempfile
 
-# ---------------- Chatbot data with multiple responses ----------------
+# ---------------- Chatbot data ----------------
 raw_data = {
     "hello": [
         "Hello! How can I help you today?",
@@ -29,17 +30,19 @@ raw_data = {
 # ---------------- Chatbot response function ----------------
 def chatbot_response(user_input):
     user_input_lower = user_input.lower()
-    
     for key in raw_data.keys():
         if key in user_input_lower:
             return random.choice(raw_data[key])
-    
     return random.choice(raw_data["default"])
 
 # ---------------- Speech-to-text function ----------------
-def speech_to_text(audio_file):
+def speech_to_text(audio_bytes):
     recognizer = sr.Recognizer()
-    with sr.AudioFile(audio_file) as source:
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
+        tmp_file.write(audio_bytes)
+        tmp_file_path = tmp_file.name
+
+    with sr.AudioFile(tmp_file_path) as source:
         audio = recognizer.record(source)
     try:
         text = recognizer.recognize_google(audio)
@@ -51,20 +54,23 @@ def speech_to_text(audio_file):
 
 # ---------------- Streamlit app ----------------
 st.title("Speech-Enabled Chatbot")
-st.write("You can chat with the bot using text or upload a voice message (.wav).")
+st.write("You can chat with the bot using text or speak directly through your microphone.")
 
-input_mode = st.radio("Choose input type:", ("Text", "Audio"))
+input_mode = st.radio("Choose input type:", ("Text", "Microphone"))
 
+# -------- Text input --------
 if input_mode == "Text":
     user_input = st.text_input("Type your message here:")
     if user_input:
         response = chatbot_response(user_input)
         st.text_area("Chatbot Response", value=response, height=100)
 
-elif input_mode == "Audio":
-    audio_file = st.file_uploader("Upload a .wav audio file", type=["wav"])
-    if audio_file:
-        user_text = speech_to_text(audio_file)
+# -------- Microphone input --------
+elif input_mode == "Microphone":
+    st.write("Click 'Start Recording', speak, then click 'Stop Recording'")
+    audio_bytes = st.audio_input("Record your voice:", type="wav")
+    if audio_bytes:
+        user_text = speech_to_text(audio_bytes)
         st.write("You said:", user_text)
         response = chatbot_response(user_text)
         st.text_area("Chatbot Response", value=response, height=100)
