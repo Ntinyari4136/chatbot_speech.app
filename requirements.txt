@@ -1,0 +1,5 @@
+streamlit
+nltk
+speechrecognition
+scikit-learn
+pydub
