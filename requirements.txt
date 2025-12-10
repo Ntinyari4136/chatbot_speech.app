@@ -3,3 +3,6 @@ nltk
 speechrecognition
 scikit-learn
 pydub
+streamlit-webrtc
+numpy
+soundfile
