@@ -8,6 +8,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import nltk
 import os
+import random
 
 nltk_data_path = os.path.join(os.getcwd(), "nltk_data")
 if not os.path.exists(nltk_data_path):
@@ -26,13 +27,28 @@ nltk.download('wordnet')
 nltk.download('stopwords')
 
 # ---------------- Chatbot data embedded directly ----------------
-raw_data = """
-Hello, how can I help you today?
-I am a chatbot.
-You can ask me questions about anything.
-Feel free to talk to me.
-I am here to assist you.
-""".lower()
+raw_data = {
+    "hello": [
+        "Hello! How can I help you today?",
+        "Hi there! What can I do for you?",
+        "Hey! How’s it going?"
+    ],
+    "how are you": [
+        "I am fine, thank you! How about you?",
+        "Doing well! How are you?",
+        "I’m great, thanks for asking!"
+    ],
+    "help": [
+        "Sure! Tell me what you need help with.",
+        "I am here to assist. What do you need?",
+        "Absolutely! How can I help you today?"
+    ],
+    "default": [
+        "I am sorry, I don't understand.",
+        "Can you please rephrase that?",
+        "Hmm, I am not sure I got that."
+    ]
+}
 
 sent_tokens = [line.strip() for line in raw_data.split("\n") if line.strip()]
 
@@ -49,24 +65,14 @@ def LemNormalize(text):
 
 # ---------------- Chatbot response function ----------------
 def chatbot_response(user_input):
-    sent_tokens.append(user_input)
+    user_input_lower = user_input.lower()
     
-    TfidfVec = TfidfVectorizer(tokenizer=LemNormalize, stop_words='english')
-    tfidf = TfidfVec.fit_transform(sent_tokens)
+    for key in raw_data.keys():
+        if key in user_input_lower:
+            return random.choice(raw_data[key])
     
-    vals = cosine_similarity(tfidf[-1], tfidf[:-1])
-    idx = vals.argmax()
-    flat = vals.flatten()
-    flat.sort()
-    req_tfidf = flat[-1]
-    
-    if req_tfidf == 0:
-        robo_response = "I am sorry, I don't understand."
-    else:
-        robo_response = sent_tokens[idx]
-    
-    sent_tokens.pop()
-    return robo_response
+    return random.choice(raw_data["default"])
+
 
 # ---------------- Speech-to-text function ----------------
 def speech_to_text(audio_file):
