@@ -1,3 +1,4 @@
+%%writefile chatbot_app.py
 import streamlit as st
 import nltk
 import string
@@ -11,9 +12,14 @@ nltk.download('punkt')
 nltk.download('wordnet')
 nltk.download('stopwords')
 
-# ---------------- Load and preprocess chatbot data ----------------
-with open("chatbot_data.txt", "r", encoding="utf8", errors='ignore') as file:
-    raw_data = file.read().lower()
+# ---------------- Chatbot data embedded directly ----------------
+raw_data = """
+Hello, how can I help you today?
+I am a chatbot.
+You can ask me questions about anything.
+Feel free to talk to me.
+I am here to assist you.
+""".lower()
 
 sent_tokens = nltk.sent_tokenize(raw_data)
 lemmer = WordNetLemmatizer()
@@ -78,3 +84,4 @@ elif input_mode == "Audio":
         st.write("You said:", user_text)
         response = chatbot_response(user_text)
         st.text_area("Chatbot Response", value=response, height=100)
+
