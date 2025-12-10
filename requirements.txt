@@ -6,3 +6,5 @@ pydub
 streamlit-webrtc
 numpy
 soundfile
+pyttsx3
+av
